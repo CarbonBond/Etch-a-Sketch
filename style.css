@@ -1,0 +1,25 @@
+body {
+    padding: 0px;
+    margin: 0px;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+}
+.container {
+    height: 90vmin;
+    width: 90vmin;
+    margin: 10px;
+    padding: 10px 30px 30px 30px;
+    background-color:red; 
+    border-radius: 10px;
+    text-align: center;
+    font-size: 200%;
+    border: 5px outset red;
+    box-shadow: 0px 0px 8px 10px #2e2d2d;
+}
+.gridItem{
+    background-color: white; 
+}
+.blackBackground {
+    background-color: black;
+}
