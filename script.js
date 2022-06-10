@@ -49,9 +49,9 @@ let canvasDisplay = (() => {
     box-sizing: border-box;
     height: 100%;
     width: 100%;
-    border: 4px inset red;
-    order: 2;
     `)
+
+  let prevDraw = null;
 
   canvas.height = canvas.offsetHeight;
   canvas.width = canvas.offsetWidth
@@ -59,6 +59,8 @@ let canvasDisplay = (() => {
 
   const clear = () => {
     cx.fillStyle = 'white';
+    cx.beginPath();
+    cx.clearRect(0, 0, canvas.width, canvas.height)
     cx.fillRect(0, 0, canvas.width, canvas.height)
   }
 
@@ -75,14 +77,30 @@ let canvasDisplay = (() => {
     let x = e.clientX - e.target.offsetLeft;
     let y = e.clientY - e.target.offsetTop;
 
-    cx.fillRect(x - (brush.getSize() / 2),
-      y - (brush.getSize() / 2),
-      brush.getSize(),
-      brush.getSize());
 
-    console.log("ClientX: ", e.clientX)
+    cx.lineCap = "round";
+    cx.strokeStyle = brush.getColor();
+    if (prevDraw) {
+      cx.beginPath();
+      cx.lineWidth = brush.getSize();
+      cx.moveTo(prevDraw.x, prevDraw.y)
+      cx.lineTo(x, y);
+      cx.stroke();
+      prevDraw = { x, y }
+
+    } else {
+      prevDraw = { x, y }
+    }
+
+
+    // RECTANGLE Drawing, possibly add back once resolution is re-implemented.
+    // cx.fillRect(x - (brush.getSize() / 2),
+    //   y - (brush.getSize() / 2),
+    //   brush.getSize(),
+    //   brush.getSize());
   }
 
+  canvas.addEventListener('mouseup', () => { prevDraw = null })
   canvas.addEventListener('mousemove', drawOnMouseDown)
   return {
     clear,
