@@ -7,7 +7,8 @@ body {
     align-content:center;
     background-color: lightslategray;
 }
-.container {
+.etchContainer {
+  box-sizing: border-box;
     height: 90vmin;
     width: 90vmin;
     margin: 10px;
@@ -20,19 +21,25 @@ body {
     box-shadow: 0px 0px 25px 10px #000000;
     display:flex;
     flex-direction: column;
+    
+}
+.title {
+    color: white;
+  text-shadow: 1px 1px 2px  black, -1px -1px 2px black, 1px -1px 2px black, -1px 1px 2px black;
+    font-weight:bolder;
 }
 .controlButton {
     width:20%;
     height:70%;
     font-size: 4vmin;
     background-color:rgb(223, 223, 223);
-    box-shadow: 0px 0px 12px 3px #000000;
-    border-radius: 10px;
+    box-shadow: 0px 0px 3px 1px #000000;
+    border-radius: 2px;
 }
 .gridItem{
     background-color: white; 
 }
-.blackBackground {
+.colorBackground {
     --etchColor: hsl(1, 100%, 50%);
     background-color: var(--etchColor);
 }

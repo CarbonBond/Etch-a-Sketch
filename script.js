@@ -1,8 +1,73 @@
 const container = document.querySelector(".container");
+const etchContainer = document.createElement('div');
+etchContainer.classList.add('etchContainer');
+container.appendChild(etchContainer)
 
-const gridContainer =  document.createElement('div');
-let size = 16//prompt("How large of a sketch pad? 100 is the max!", "");
-if(size > 100){size = 100;}
+
+
+
+let canvasDisplay = (() => {
+  const canvas = document.createElement('canvas');
+  let cx = canvas.getContext('2d');
+  cx.fillStyle = 'blue';
+
+  etchContainer.appendChild(canvas);
+
+  cx.fillRect(0, 0, 10, 100)
+
+  canvas.setAttribute('style', `
+    box-sizing: border-box;
+    height: 100%;
+    width: 100%;
+    border: 4px inset red;
+    order: 2;
+    `)
+
+  canvas.height = canvas.offsetHeight;
+  canvas.width = canvas.offsetWidth
+
+
+  const clear = () => {
+    cx.fillStyle = 'white';
+    cx.fillRect(0, 0, canvas.width, canvas.height)
+  }
+
+  clear();
+
+  let resolution = 100;
+
+  let setResolution = (pixels) => {
+    if (pixels > 10000) pixels = 1000;
+    resolution = pixels;
+  }
+
+
+  canvas.addEventListener('mousemove', (e) => {
+    cx.fillStyle = 'black';
+    let x = Math.floor((e.clientX - canvas.offsetLeft) / (canvas.offsetWidth / resolution));
+    let y = Math.floor((e.clientY - canvas.offsetTop) / (canvas.offsetHeight / resolution));
+
+
+    cx.fillRect(x * (canvas.offsetWidth / resolution),
+      y * (canvas.offsetHeight / resolution),
+      canvas.offsetWidth / resolution,
+      canvas.offsetHeight / resolution);
+
+    console.log(x * (canvas.offsetWidth / resolution),
+      y * (canvas.offsetHeight / resolution),
+      canvas.offsetWidth / resolution,
+      canvas.offsetHeight / resolution)
+
+
+
+  })
+  return {
+    clear,
+    setResolution
+  }
+})();
+
+console.log(canvasDisplay)
 
 
 let gridCell = container.querySelectorAll(".gridItem")
@@ -22,13 +87,6 @@ controlsContainer.setAttribute('style', `
     order:3;
     `)
 
-const controlReset = document.createElement('button');
-controlReset.classList.add('controlButton');
-controlReset.textContent = "Clear";
-controlReset.setAttribute('style', `
-order:1;
-`)
-
 const titleDiv = document.createElement('div');
 controlsContainer.appendChild(titleDiv);
 titleDiv.textContent = "Sketch N Etch";
@@ -38,70 +96,72 @@ titleDiv.setAttribute('style', `
     font-size: 5vmin;
 `)
 
-const controlSet = document.createElement('button');
-controlSet.classList.add('controlButton');
-controlSet.textContent = "Size"
-controlSet.setAttribute('style', `
+const clearScreen = document.createElement('button');
+clearScreen.classList.add('controlButton');
+clearScreen.textContent = "Clear";
+clearScreen.setAttribute('style', `
+order:1;
+`)
+
+// TODO change this to a canvas clear
+clearScreen.addEventListener('click', () => {
+  canvasDisplay.clear();
+
+  // DOM old
+  // gridCell.forEach((item) => {
+  //   item.classList.remove('colorBackground')
+  // })
+})
+
+const setResolution = document.createElement('button');
+setResolution.classList.add('controlButton');
+setResolution.textContent = "Size"
+setResolution.setAttribute('style', `
 order:3;
 `)
 
-
-controlReset.addEventListener('click', () => {
-    gridCell.forEach((item) => {
-        item.classList.remove('blackBackground')
-    })   
-})
-
-controlSet.addEventListener('click', () => {
-    let gridSize = 16;
-    do{
+setResolution.addEventListener('click', () => {
+  pixels = prompt("How many pixels do you want for the Sketch n Etch. Max 100")
+  canvasDisplay.setResolution(pixels)
+  /* old laggy DOM
+  let gridSize = 16;
+  do {
     gridSize = prompt("How many pixels do you want for the Sketch n Etch. Max 100")
-    } while (!(gridSize <= 100))
-    console.log(gridSize)
-    if(gridSize == 0 || gridSize == null) {return;}
-    deleteGrid(gridCell);
-    makeGrid(gridSize,gridSize);
+  } while (!(gridSize <= 100))
+  console.log(gridSize)
+  if (gridSize == 0 || gridSize == null) { return; }
+  deleteGrid(gridCell);
+  makeGrid(gridSize, gridSize);*/
 })
 
-container.appendChild(controlsContainer);
-controlsContainer.appendChild(controlReset);
-controlsContainer.appendChild(controlSet);
+etchContainer.appendChild(controlsContainer);
+controlsContainer.appendChild(clearScreen);
+controlsContainer.appendChild(setResolution);
 
-makeGrid(size,size);
-
-
-
-
-function makeGrid(rows, cols) {
-
-    gridContainer.setAttribute('style', `
-    box-sizing: border-box;
-    height: 87%;
-    width: 100%;
-    display: grid;
-    grid-template-rows: repeat(${rows}, auto);
-    grid-template-columns: repeat(${cols}, auto);
-    border: 4px inset red;
-    order: 2;
-    `)
-    container.appendChild(gridContainer)
-    for(i = 0; i < (rows * cols); i++){
-        let cell = document.createElement('div');
-        cell.classList.add("gridItem")
-        gridContainer.appendChild(cell)
-    }
-    gridCell = container.querySelectorAll(".gridItem")
-    gridCell.forEach((item) => {
-        item.addEventListener('mouseover', () => {
-            item.classList.add('blackBackground')
-            colorArray[0] = (colorArray[0]<360) ? colorArray[0]+3: 0;
-            colorArray[2] = (colorArray[2]>0) ? colorArray[2]-1: 50;
-            item.style.setProperty('--etchColor', `hsl(${colorArray[0]}, ${colorArray[1]}%, ${colorArray[2]}%)`)
-        })
-    })
+/*  DOM Approch
+for (i = 0; i < (rows * cols); i++) {
+let cell = document.createElement('div');
+cell.classList.add("gridItem")
+gridContainer.appendChild(cell)
 }
-function deleteGrid(gridCell){
-    gridCell.forEach((item) => {
-        item.remove();
-    })
+gridCell = container.querySelectorAll(".gridItem")
+gridCell.forEach((item) => {
+item.addEventListener('mouseover', () => {
+item.classList.add('colorBackground')
+colorArray[0] = (colorArray[0] < 360) ? colorArray[0] + 3 : 0;
+colorArray[2] = (colorArray[2] > 0) ? colorArray[2] - 1 : 50;
+item.style.setProperty('--etchColor', `hsl(${colorArray[0]}, ${colorArray[1]}%, ${colorArray[2]}%)`)
+})
+})
 }
+function deleteGrid(gridCell) {
+gridCell.forEach((item) => {
+item.remove();
+})
+}
+
+
+display: grid;
+grid-template-rows: repeat(${rows}, auto);
+grid-template-columns: repeat(${cols}, auto);
+*/
