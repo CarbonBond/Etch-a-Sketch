@@ -1,0 +1,10 @@
+version: '3'
+services:
+  web:
+    container_name:  sketch
+    image:  sketch
+    build:
+      context: .
+      target: production
+    ports:
+      - "8087:80"
