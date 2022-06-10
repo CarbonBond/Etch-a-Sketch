@@ -3,17 +3,47 @@ const etchContainer = document.createElement('div');
 etchContainer.classList.add('etchContainer');
 container.appendChild(etchContainer)
 
+let mouseDown = false;
 
+document.body.onmousedown = () => {
+  mouseDown = true;
+}
+
+document.body.onmouseup = () => {
+  mouseDown = false
+}
+
+let brush = (() => {
+  let size = 10;
+  let color = "black";
+
+  let setSize = (newSize) => {
+    if (isNaN(parseInt(newSize))) return;
+    size = parseInt(newSize);
+    console.log(size)
+  }
+
+  let setColor = (newColor) => {
+    if (typeof newColor !== 'string') return;
+    color = newColor;
+  }
+  let getSize = () => { return size; }
+  let getColor = () => { return color; }
+
+  return {
+    getColor,
+    getSize,
+    setSize,
+    setColor
+  }
+})();
 
 
 let canvasDisplay = (() => {
   const canvas = document.createElement('canvas');
   let cx = canvas.getContext('2d');
-  cx.fillStyle = 'blue';
 
   etchContainer.appendChild(canvas);
-
-  cx.fillRect(0, 0, 10, 100)
 
   canvas.setAttribute('style', `
     box-sizing: border-box;
@@ -34,36 +64,28 @@ let canvasDisplay = (() => {
 
   clear();
 
-  let resolution = 100;
+  const drawOnMouseDown = (e) => {
+    if (!mouseDown) return;
 
-  let setResolution = (pixels) => {
-    if (pixels > 10000) pixels = 1000;
-    resolution = pixels;
+    cx.fillStyle = brush.getColor();
+    //Get grid
+    // (GET mosue releactive to container )  / ( get width )
+
+
+    let x = e.clientX - e.target.offsetLeft;
+    let y = e.clientY - e.target.offsetTop;
+
+    cx.fillRect(x - (brush.getSize() / 2),
+      y - (brush.getSize() / 2),
+      brush.getSize(),
+      brush.getSize());
+
+    console.log("ClientX: ", e.clientX)
   }
 
-
-  canvas.addEventListener('mousemove', (e) => {
-    cx.fillStyle = 'black';
-    let x = Math.floor((e.clientX - canvas.offsetLeft) / (canvas.offsetWidth / resolution));
-    let y = Math.floor((e.clientY - canvas.offsetTop) / (canvas.offsetHeight / resolution));
-
-
-    cx.fillRect(x * (canvas.offsetWidth / resolution),
-      y * (canvas.offsetHeight / resolution),
-      canvas.offsetWidth / resolution,
-      canvas.offsetHeight / resolution);
-
-    console.log(x * (canvas.offsetWidth / resolution),
-      y * (canvas.offsetHeight / resolution),
-      canvas.offsetWidth / resolution,
-      canvas.offsetHeight / resolution)
-
-
-
-  })
+  canvas.addEventListener('mousemove', drawOnMouseDown)
   return {
     clear,
-    setResolution
   }
 })();
 
@@ -75,24 +97,14 @@ let gridCell = container.querySelectorAll(".gridItem")
 let colorArray = [1, 100, 50]
 
 const controlsContainer = document.createElement('div');
-controlsContainer.classList.add(".controls")
-controlsContainer.setAttribute('style', `
-    box-sizing: border-box;
-    height: 12%;
-    width: 100%;
-    margin-top: 1vmin;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    order:3;
-    `)
+controlsContainer.classList.add("controls")
 
 const titleDiv = document.createElement('div');
 controlsContainer.appendChild(titleDiv);
 titleDiv.textContent = "Sketch N Etch";
 titleDiv.classList.add('title');
 titleDiv.setAttribute('style', `
-    order:2;
+    order:1;
     font-size: 5vmin;
 `)
 
@@ -100,7 +112,7 @@ const clearScreen = document.createElement('button');
 clearScreen.classList.add('controlButton');
 clearScreen.textContent = "Clear";
 clearScreen.setAttribute('style', `
-order:1;
+order:2;
 `)
 
 // TODO change this to a canvas clear
@@ -113,16 +125,16 @@ clearScreen.addEventListener('click', () => {
   // })
 })
 
-const setResolution = document.createElement('button');
-setResolution.classList.add('controlButton');
-setResolution.textContent = "Size"
-setResolution.setAttribute('style', `
+const setBrushSize = document.createElement('button');
+setBrushSize.classList.add('controlButton');
+setBrushSize.textContent = "Size"
+setBrushSize.setAttribute('style', `
 order:3;
 `)
 
-setResolution.addEventListener('click', () => {
+setBrushSize.addEventListener('click', () => {
   pixels = prompt("How many pixels do you want for the Sketch n Etch. Max 100")
-  canvasDisplay.setResolution(pixels)
+  brush.setSize(pixels)
   /* old laggy DOM
   let gridSize = 16;
   do {
@@ -133,10 +145,30 @@ setResolution.addEventListener('click', () => {
   deleteGrid(gridCell);
   makeGrid(gridSize, gridSize);*/
 })
+const setColor = document.createElement('input');
+setColor.classList.add('controlButton');
+setColor.textContent = "Color"
+setColor.type = "color";
+setColor.setAttribute('style', `
+order:4;
+`)
 
+setColor.addEventListener('change', (e) => {
+  brush.setColor(e.target.value)
+  /* old laggy DOM
+  let gridSize = 16;
+  do {
+    gridSize = prompt("How many pixels do you want for the Sketch n Etch. Max 100")
+  } while (!(gridSize <= 100))
+  console.log(gridSize)
+  if (gridSize == 0 || gridSize == null) { return; }
+  deleteGrid(gridCell);
+  makeGrid(gridSize, gridSize);*/
+})
 etchContainer.appendChild(controlsContainer);
 controlsContainer.appendChild(clearScreen);
-controlsContainer.appendChild(setResolution);
+controlsContainer.appendChild(setBrushSize);
+controlsContainer.appendChild(setColor);
 
 /*  DOM Approch
 for (i = 0; i < (rows * cols); i++) {
