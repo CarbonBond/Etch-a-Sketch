@@ -118,7 +118,7 @@ const controlsContainer = document.createElement('div');
 controlsContainer.classList.add("controls")
 
 const titleDiv = document.createElement('div');
-controlsContainer.appendChild(titleDiv);
+container.appendChild(titleDiv);
 titleDiv.textContent = "Sketch N Etch";
 titleDiv.classList.add('title');
 titleDiv.setAttribute('style', `
