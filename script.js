@@ -40,9 +40,8 @@ let canvasDisplay = (() => {
 
   etchContainer.appendChild(canvas)
 
-  let width = window.innerWidth;
-  let height = window.innerHeight;
-
+  let width = window.innerWidth
+  let height = window.innerHeight
 
   canvas.setAttribute(
     'style',
@@ -56,28 +55,57 @@ let canvasDisplay = (() => {
   let undoStack = []
   let redoStack = []
 
-  let mouseDown = false
-
-  let prevDraw = null
-  canvas.addEventListener('mousedown', () => {
-    controlsContainer.classList.add('mouseDisabled')
-    mouseDown = true;
-  })
-  canvas.addEventListener('mouseup', () => {
-    controlsContainer.classList.remove('mouseDisabled')
-    prevDraw = null
-    mouseDown = false;
-  })
-
-  canvas.height = canvas.offsetHeight
-  canvas.width = canvas.offsetWidth
-
   const clear = () => {
     cx.fillStyle = 'white'
     cx.beginPath()
     cx.clearRect(0, 0, canvas.width, canvas.height)
     cx.fillRect(0, 0, canvas.width, canvas.height)
+    cx.closePath()
+    undoStack.push(canvas.toDataURL())
   }
+
+  let mouseDown = false
+
+  let prevDraw = null
+  canvas.addEventListener('mousedown', () => {
+    controlsContainer.classList.add('mouseDisabled')
+    mouseDown = true
+  })
+  canvas.addEventListener('mouseup', () => {
+    controlsContainer.classList.remove('mouseDisabled')
+    prevDraw = null
+    mouseDown = false
+    undoStack.push(canvas.toDataURL())
+  })
+
+  window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && !e.repeat) {
+      if (e.key === 'z') {
+        if (undoStack.length > 0) {
+          redoStack.push(undoStack.pop())
+          let img = new Image()
+          img.src = undoStack.slice(-1)
+          img.onload = () => {
+            cx.drawImage(img, 0, 0)
+          }
+        }
+      }
+      if (e.shiftKey && e.key === 'Z') {
+        console.log('test')
+        if (redoStack.length > 0) {
+          let img = new Image()
+          img.src = redoStack.slice(-1)
+          img.onload = () => {
+            cx.drawImage(img, 0, 0)
+          }
+          undoStack.push(redoStack.pop())
+        }
+      }
+    }
+  })
+
+  canvas.height = canvas.offsetHeight
+  canvas.width = canvas.offsetWidth
 
   clear()
 
@@ -123,7 +151,6 @@ let gridCell = container.querySelectorAll('.gridItem')
 let colorArray = [1, 100, 50]
 
 controlsContainer.classList.add('controls')
-
 
 const clearScreen = document.createElement('button')
 clearScreen.classList.add('controlButton')
