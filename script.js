@@ -1,97 +1,109 @@
-const container = document.querySelector(".container");
-const etchContainer = document.createElement('div');
-etchContainer.classList.add('etchContainer');
+const container = document.querySelector('.container')
+const etchContainer = document.createElement('div')
+etchContainer.classList.add('etchContainer')
 container.appendChild(etchContainer)
 
-let mouseDown = false;
-
-document.body.onmousedown = () => {
-  mouseDown = true;
-}
-
-document.body.onmouseup = () => {
-  mouseDown = false
-}
+const controlsContainer = document.createElement('div')
 
 let brush = (() => {
-  let size = 10;
-  let color = "black";
+  let size = 10
+  let color = 'black'
 
   let setSize = (newSize) => {
-    if (isNaN(parseInt(newSize))) return;
-    size = parseInt(newSize);
+    if (isNaN(parseInt(newSize))) return
+    size = parseInt(newSize)
     console.log(size)
   }
 
   let setColor = (newColor) => {
-    if (typeof newColor !== 'string') return;
-    color = newColor;
+    if (typeof newColor !== 'string') return
+    color = newColor
   }
-  let getSize = () => { return size; }
-  let getColor = () => { return color; }
+  let getSize = () => {
+    return size
+  }
+  let getColor = () => {
+    return color
+  }
 
   return {
     getColor,
     getSize,
     setSize,
-    setColor
+    setColor,
   }
-})();
-
+})()
 
 let canvasDisplay = (() => {
-  const canvas = document.createElement('canvas');
-  let cx = canvas.getContext('2d');
+  const canvas = document.createElement('canvas')
+  let cx = canvas.getContext('2d')
 
-  etchContainer.appendChild(canvas);
+  etchContainer.appendChild(canvas)
 
-  canvas.setAttribute('style', `
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+
+
+  canvas.setAttribute(
+    'style',
+    `
     box-sizing: border-box;
-    height: 100%;
-    width: 100%;
-    `)
+    height: ${height}px;
+    width: ${width}px;
+    `
+  )
 
-  let prevDraw = null;
+  let undoStack = []
+  let redoStack = []
 
-  canvas.height = canvas.offsetHeight;
+  let mouseDown = false
+
+  let prevDraw = null
+  canvas.addEventListener('mousedown', () => {
+    controlsContainer.classList.add('mouseDisabled')
+    mouseDown = true;
+  })
+  canvas.addEventListener('mouseup', () => {
+    controlsContainer.classList.remove('mouseDisabled')
+    prevDraw = null
+    mouseDown = false;
+  })
+
+  canvas.height = canvas.offsetHeight
   canvas.width = canvas.offsetWidth
 
-
   const clear = () => {
-    cx.fillStyle = 'white';
-    cx.beginPath();
+    cx.fillStyle = 'white'
+    cx.beginPath()
     cx.clearRect(0, 0, canvas.width, canvas.height)
     cx.fillRect(0, 0, canvas.width, canvas.height)
   }
 
-  clear();
+  clear()
 
   const drawOnMouseDown = (e) => {
-    if (!mouseDown) return;
+    if (!mouseDown) return
 
-    cx.fillStyle = brush.getColor();
     //Get grid
     // (GET mosue releactive to container )  / ( get width )
 
+    let x = e.clientX - e.target.offsetLeft
+    let y = e.clientY - e.target.offsetTop
 
-    let x = e.clientX - e.target.offsetLeft;
-    let y = e.clientY - e.target.offsetTop;
+    cx.lineCap = 'round'
+    cx.strokeStyle = brush.getColor()
+    cx.fillStyle = brush.getColor()
+    cx.lineWidth = brush.getSize()
 
-
-    cx.lineCap = "round";
-    cx.strokeStyle = brush.getColor();
     if (prevDraw) {
-      cx.beginPath();
-      cx.lineWidth = brush.getSize();
+      cx.beginPath()
       cx.moveTo(prevDraw.x, prevDraw.y)
-      cx.lineTo(x, y);
-      cx.stroke();
+      cx.lineTo(x, y)
+      cx.stroke()
       prevDraw = { x, y }
-
     } else {
       prevDraw = { x, y }
     }
-
 
     // RECTANGLE Drawing, possibly add back once resolution is re-implemented.
     // cx.fillRect(x - (brush.getSize() / 2),
@@ -100,42 +112,32 @@ let canvasDisplay = (() => {
     //   brush.getSize());
   }
 
-  canvas.addEventListener('mouseup', () => { prevDraw = null })
   canvas.addEventListener('mousemove', drawOnMouseDown)
   return {
     clear,
   }
-})();
+})()
 
-console.log(canvasDisplay)
-
-
-let gridCell = container.querySelectorAll(".gridItem")
+let gridCell = container.querySelectorAll('.gridItem')
 
 let colorArray = [1, 100, 50]
 
-const controlsContainer = document.createElement('div');
-controlsContainer.classList.add("controls")
+controlsContainer.classList.add('controls')
 
-const titleDiv = document.createElement('div');
-container.appendChild(titleDiv);
-titleDiv.textContent = "Sketch N Etch";
-titleDiv.classList.add('title');
-titleDiv.setAttribute('style', `
-    order:1;
-    font-size: 5vmin;
-`)
 
-const clearScreen = document.createElement('button');
-clearScreen.classList.add('controlButton');
-clearScreen.textContent = "Clear";
-clearScreen.setAttribute('style', `
+const clearScreen = document.createElement('button')
+clearScreen.classList.add('controlButton')
+clearScreen.textContent = 'Clear'
+clearScreen.setAttribute(
+  'style',
+  `
 order:2;
-`)
+`
+)
 
 // TODO change this to a canvas clear
 clearScreen.addEventListener('click', () => {
-  canvasDisplay.clear();
+  canvasDisplay.clear()
 
   // DOM old
   // gridCell.forEach((item) => {
@@ -143,15 +145,20 @@ clearScreen.addEventListener('click', () => {
   // })
 })
 
-const setBrushSize = document.createElement('button');
-setBrushSize.classList.add('controlButton');
-setBrushSize.textContent = "Size"
-setBrushSize.setAttribute('style', `
+const setBrushSize = document.createElement('button')
+setBrushSize.classList.add('controlButton')
+setBrushSize.textContent = 'Size'
+setBrushSize.setAttribute(
+  'style',
+  `
 order:3;
-`)
+`
+)
 
 setBrushSize.addEventListener('click', () => {
-  pixels = prompt("How many pixels do you want for the Sketch n Etch. Max 100")
+  let pixels = prompt(
+    'How many pixels do you want for the Sketch n Etch. Max 100'
+  )
   brush.setSize(pixels)
   /* old laggy DOM
   let gridSize = 16;
@@ -163,13 +170,16 @@ setBrushSize.addEventListener('click', () => {
   deleteGrid(gridCell);
   makeGrid(gridSize, gridSize);*/
 })
-const setColor = document.createElement('input');
-setColor.classList.add('controlButton');
-setColor.textContent = "Color"
-setColor.type = "color";
-setColor.setAttribute('style', `
+const setColor = document.createElement('input')
+setColor.classList.add('controlButton')
+setColor.textContent = 'Color'
+setColor.type = 'color'
+setColor.setAttribute(
+  'style',
+  `
 order:4;
-`)
+`
+)
 
 setColor.addEventListener('change', (e) => {
   brush.setColor(e.target.value)
@@ -183,10 +193,10 @@ setColor.addEventListener('change', (e) => {
   deleteGrid(gridCell);
   makeGrid(gridSize, gridSize);*/
 })
-etchContainer.appendChild(controlsContainer);
-controlsContainer.appendChild(clearScreen);
-controlsContainer.appendChild(setBrushSize);
-controlsContainer.appendChild(setColor);
+etchContainer.appendChild(controlsContainer)
+controlsContainer.appendChild(clearScreen)
+controlsContainer.appendChild(setBrushSize)
+controlsContainer.appendChild(setColor)
 
 /*  DOM Approch
 for (i = 0; i < (rows * cols); i++) {
