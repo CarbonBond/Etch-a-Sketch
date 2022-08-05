@@ -69,6 +69,7 @@ let canvasDisplay = (() => {
   let prevDraw = null
   canvas.addEventListener('mousedown', () => {
     controlsContainer.classList.add('mouseDisabled')
+    if (redoStack.length > 0) redoStack = []
     mouseDown = true
   })
   canvas.addEventListener('mouseup', () => {
@@ -76,6 +77,9 @@ let canvasDisplay = (() => {
     prevDraw = null
     mouseDown = false
     undoStack.push(canvas.toDataURL())
+    if (undoStack.length > 20) {
+      undoStack.shift()
+    }
   })
 
   window.addEventListener('keydown', (e) => {
