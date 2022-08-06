@@ -47,11 +47,11 @@ body {
   margin: 0 0.25em;
   display: flex;
   align-items: center;
-  justify-self: center;
+  justify-content: center;
   text-align: center;
   flex: 1 0 auto;
   height: 1.25em;
-  max-width: 3em;
+  max-width: 5em;
   padding: 0.3vh 1vh;
   font-size: 1em;
 }
