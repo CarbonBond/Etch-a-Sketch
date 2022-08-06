@@ -6,7 +6,7 @@ container.appendChild(etchContainer)
 const controlsContainer = document.createElement('div')
 
 let brush = (() => {
-  let size = 10
+  let size = 5 
   let color = 'black'
 
   let setSize = (newSize) => {
@@ -176,9 +176,10 @@ clearScreen.addEventListener('click', () => {
   // })
 })
 
-const setBrushSize = document.createElement('button')
+const setBrushSize = document.createElement('input')
+setBrushSize.type = 'number';
 setBrushSize.classList.add('controlButton')
-setBrushSize.textContent = 'Size'
+setBrushSize.value = brush.getSize();
 setBrushSize.setAttribute(
   'style',
   `
@@ -186,10 +187,8 @@ order:3;
 `
 )
 
-setBrushSize.addEventListener('click', () => {
-  let pixels = prompt(
-    'How many pixels do you want for the Sketch n Etch. Max 100'
-  )
+setBrushSize.addEventListener('change', () => {
+  let pixels =  setBrushSize.value;
   brush.setSize(pixels)
   /* old laggy DOM
   let gridSize = 16;
