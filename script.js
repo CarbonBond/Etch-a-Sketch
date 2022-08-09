@@ -5,6 +5,7 @@ container.appendChild(etchContainer)
 
 const controlsContainer = document.createElement('div')
 
+
 let brush = (() => {
   let size = 5 
   let color = 'black'
@@ -34,52 +35,139 @@ let brush = (() => {
   }
 })()
 
+let selectBox = (() => {
+  let p1 = {
+    x : 0,
+    y : 0 
+  } 
+  let p2 = { x: window.innerWidth,  y : window.innerHeight}
+
+  let inside = (x, y) => {
+    if(x > p1.x && x < p2.x && y > p1.y && y < p2.y) {
+      return true;
+    }
+    return false;
+  }
+
+  const box = document.createElement('div');
+  box.classList.add('box');
+
+  return {
+    inside,
+    p1,
+    p2,
+    box
+  }
+})();
+
+
 let canvasDisplay = (() => {
-  const canvas = document.createElement('canvas')
+
+  const createLayer = () => {
+    const canvas = document.createElement('canvas')
+    canvas.style.position = 'fixed'
+    canvas.style.top = 0;
+    canvas.style.left = 0
+    canvas.style.width = innerWidth;
+    canvas.style.height = innerHeight;
+    etchContainer.appendChild(canvas)
+    canvas.height = window.innerHeight
+    canvas.width = window.innerWidth
+    return canvas;
+  }
+
+  const canvas =  createLayer();
   let cx = canvas.getContext('2d')
 
-  etchContainer.appendChild(canvas)
-
-  let width = window.innerWidth
-  let height = window.innerHeight
-
-  canvas.setAttribute(
-    'style',
-    `
-    box-sizing: border-box;
-    height: ${height}px;
-    width: ${width}px;
-    `
-  )
+  const toolsLayer = createLayer();
+  toolsLayer.style.pointerEvents = 'none'
+  let toolCX = toolsLayer.getContext('2d');
 
   let undoStack = []
   let redoStack = []
 
-  const clear = () => {
-    cx.fillStyle = 'white'
-    cx.beginPath()
-    cx.clearRect(0, 0, canvas.width, canvas.height)
-    cx.fillRect(0, 0, canvas.width, canvas.height)
-    cx.closePath()
+  const clear = (color, ctx = cx) => {
+    ctx.beginPath()
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
+    ctx.closePath()
+    if(color) {
+      ctx.fillStyle = color 
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight)
+    }
     undoStack.push(canvas.toDataURL())
   }
 
-  let mouseDown = false
-
+  let mouseDown = "notPressed"; 
   let prevDraw = null
-  canvas.addEventListener('mousedown', () => {
-    controlsContainer.classList.add('mouseDisabled')
-    if (redoStack.length > 0) redoStack = []
-    mouseDown = true
-  })
-  canvas.addEventListener('mouseup', () => {
-    controlsContainer.classList.remove('mouseDisabled')
-    prevDraw = null
-    mouseDown = false
-    undoStack.push(canvas.toDataURL())
-    if (undoStack.length > 20) {
-      undoStack.shift()
+
+
+  clear('white')
+  clear(null, toolCX)
+
+  const drawSelectBox = (e) => {
+    toolCX.fillStyle = 'black';
+    clear(null, toolCX)
+    toolCX.rect(selectBox.p1.x, selectBox.p1.y, e.clientX - selectBox.p1.x, e.clientY - selectBox.p1.y);
+    toolCX.stroke();
+  }
+
+  const drawOnMouseDown = (e, ctx = cx) => {
+
+    //Get grid
+    // (GET mosue releactive to container )  / ( get width )
+
+    let x = e.clientX - e.target.offsetLeft
+    let y = e.clientY - e.target.offsetTop
+
+    ctx.lineCap = 'round'
+    ctx.strokeStyle = brush.getColor()
+    ctx.fillStyle = brush.getColor()
+    ctx.lineWidth = brush.getSize()
+
+    if (prevDraw) {
+      ctx.beginPath()
+      ctx.moveTo(prevDraw.x, prevDraw.y)
+      ctx.lineTo(x, y)
+      ctx.stroke()
+      prevDraw = { x, y }
+    } else {
+      prevDraw = { x, y }
     }
+
+    // RECTANGLE Drawing, possibly add back once resolution is re-implemented.
+    // ctx.fillRect(x - (brush.getSize() / 2),
+    //   y - (brush.getSize() / 2),
+    //   brush.getSize(),
+    //   brush.getSize());
+  }
+  canvas.addEventListener('mousedown', (e) => {
+    controlsContainer.classList.add('mouseDisabled')
+    switch (e.button) {
+      case 0:
+        if (redoStack.length > 0) redoStack = []
+        mouseDown = "draw"
+        break;
+      case 1:
+        selectBox.p1 = {x: e.x, y: e.y};
+        mouseDown = "select"
+        break;
+    }
+  })
+  canvas.addEventListener('mouseup', (e) => {
+    controlsContainer.classList.remove('mouseDisabled')
+    mouseDown = 'notPressed' 
+    switch (e.button) {
+      case 0:
+        prevDraw = null
+        undoStack.push(canvas.toDataURL())
+        if (undoStack.length > 20) {
+          undoStack.shift()
+        }
+        break;
+      case 2:
+        selectBox.p2 = {x: e.x, y: e.y};
+        break;
+    } 
   })
 
   let undo = () => {
@@ -113,44 +201,18 @@ let canvasDisplay = (() => {
       }
     }
   })
-
-  canvas.height = canvas.offsetHeight
-  canvas.width = canvas.offsetWidth
-
-  clear()
-
-  const drawOnMouseDown = (e) => {
-    if (!mouseDown) return
-
-    //Get grid
-    // (GET mosue releactive to container )  / ( get width )
-
-    let x = e.clientX - e.target.offsetLeft
-    let y = e.clientY - e.target.offsetTop
-
-    cx.lineCap = 'round'
-    cx.strokeStyle = brush.getColor()
-    cx.fillStyle = brush.getColor()
-    cx.lineWidth = brush.getSize()
-
-    if (prevDraw) {
-      cx.beginPath()
-      cx.moveTo(prevDraw.x, prevDraw.y)
-      cx.lineTo(x, y)
-      cx.stroke()
-      prevDraw = { x, y }
-    } else {
-      prevDraw = { x, y }
+  canvas.addEventListener('mousemove', (e) => {
+    switch(mouseDown) {
+      case 'draw':
+        drawOnMouseDown(e, cx)
+        break;
+      case 'select':
+        drawSelectBox(e)
+        break;
+      default:
+        break;
     }
-
-    // RECTANGLE Drawing, possibly add back once resolution is re-implemented.
-    // cx.fillRect(x - (brush.getSize() / 2),
-    //   y - (brush.getSize() / 2),
-    //   brush.getSize(),
-    //   brush.getSize());
-  }
-
-  canvas.addEventListener('mousemove', drawOnMouseDown)
+  })
   return {
     clear,
     undo,
@@ -177,7 +239,7 @@ order:2;
 `
 )
 clearScreen.addEventListener('click', () => {
-  canvasDisplay.clear()
+  canvasDisplay.clear('white')
 })
 
 
