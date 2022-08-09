@@ -82,28 +82,34 @@ let canvasDisplay = (() => {
     }
   })
 
+  let undo = () => {
+    if (undoStack.length > 0) {
+      redoStack.push(undoStack.pop())
+      let img = new Image()
+      img.src = undoStack.slice(-1)
+      img.onload = () => {
+        cx.drawImage(img, 0, 0)
+      }
+    }
+  }
+
+  let redo = () => {
+    if (redoStack.length > 0) {
+      let img = new Image()
+      img.src = redoStack.slice(-1)
+      img.onload = () => {
+        cx.drawImage(img, 0, 0)
+      }
+      undoStack.push(redoStack.pop())
+    }
+  }
   window.addEventListener('keydown', (e) => {
     if (e.ctrlKey && !e.repeat) {
       if (e.key === 'z') {
-        if (undoStack.length > 0) {
-          redoStack.push(undoStack.pop())
-          let img = new Image()
-          img.src = undoStack.slice(-1)
-          img.onload = () => {
-            cx.drawImage(img, 0, 0)
-          }
-        }
+        undo()
       }
       if (e.shiftKey && e.key === 'Z') {
-        console.log('test')
-        if (redoStack.length > 0) {
-          let img = new Image()
-          img.src = redoStack.slice(-1)
-          img.onload = () => {
-            cx.drawImage(img, 0, 0)
-          }
-          undoStack.push(redoStack.pop())
-        }
+        redo()
       }
     }
   })
@@ -147,6 +153,10 @@ let canvasDisplay = (() => {
   canvas.addEventListener('mousemove', drawOnMouseDown)
   return {
     clear,
+    undo,
+    redo,
+    undoStack,
+    redoStack
   }
 })()
 
@@ -156,6 +166,7 @@ let colorArray = [1, 100, 50]
 
 controlsContainer.classList.add('controls')
 
+//CLEAR Button
 const clearScreen = document.createElement('button')
 clearScreen.classList.add('controlButton')
 clearScreen.textContent = 'Clear'
@@ -165,17 +176,37 @@ clearScreen.setAttribute(
 order:2;
 `
 )
-
-// TODO change this to a canvas clear
 clearScreen.addEventListener('click', () => {
   canvasDisplay.clear()
-
-  // DOM old
-  // gridCell.forEach((item) => {
-  //   item.classList.remove('colorBackground')
-  // })
 })
 
+
+const undoButton = document.createElement('button')
+undoButton.classList.add('controlButton')
+undoButton.textContent = 'Undo'
+undoButton.setAttribute(
+  'style',
+  `
+order:4;
+`
+)
+undoButton.addEventListener('click', () => {
+  canvasDisplay.undo()
+})
+
+const redoButton = document.createElement('button')
+redoButton.classList.add('controlButton')
+redoButton.textContent = 'Redo'
+redoButton.setAttribute(
+  'style',
+  `
+order:5;
+`
+)
+redoButton.addEventListener('click', () => {
+  canvasDisplay.redo()
+})
+//BRUSHSIZE input
 const setBrushSize = document.createElement('input')
 setBrushSize.type = 'number';
 setBrushSize.classList.add('controlButton')
@@ -190,16 +221,9 @@ order:3;
 setBrushSize.addEventListener('change', () => {
   let pixels =  setBrushSize.value;
   brush.setSize(pixels)
-  /* old laggy DOM
-  let gridSize = 16;
-  do {
-    gridSize = prompt("How many pixels do you want for the Sketch n Etch. Max 100")
-  } while (!(gridSize <= 100))
-  console.log(gridSize)
-  if (gridSize == 0 || gridSize == null) { return; }
-  deleteGrid(gridCell);
-  makeGrid(gridSize, gridSize);*/
 })
+
+//COLOR INPUT
 const setColor = document.createElement('input')
 setColor.classList.add('controlButton')
 setColor.textContent = 'Color'
@@ -213,45 +237,12 @@ order:4;
 
 setColor.addEventListener('change', (e) => {
   brush.setColor(e.target.value)
-  /* old laggy DOM
-  let gridSize = 16;
-  do {
-    gridSize = prompt("How many pixels do you want for the Sketch n Etch. Max 100")
-  } while (!(gridSize <= 100))
-  console.log(gridSize)
-  if (gridSize == 0 || gridSize == null) { return; }
-  deleteGrid(gridCell);
-  makeGrid(gridSize, gridSize);*/
 })
 etchContainer.appendChild(controlsContainer)
+
 controlsContainer.appendChild(clearScreen)
 controlsContainer.appendChild(setBrushSize)
 controlsContainer.appendChild(setColor)
+controlsContainer.appendChild(undoButton)
+controlsContainer.appendChild(redoButton)
 
-/*  DOM Approch
-for (i = 0; i < (rows * cols); i++) {
-let cell = document.createElement('div');
-cell.classList.add("gridItem")
-gridContainer.appendChild(cell)
-}
-gridCell = container.querySelectorAll(".gridItem")
-gridCell.forEach((item) => {
-item.addEventListener('mouseover', () => {
-item.classList.add('colorBackground')
-colorArray[0] = (colorArray[0] < 360) ? colorArray[0] + 3 : 0;
-colorArray[2] = (colorArray[2] > 0) ? colorArray[2] - 1 : 50;
-item.style.setProperty('--etchColor', `hsl(${colorArray[0]}, ${colorArray[1]}%, ${colorArray[2]}%)`)
-})
-})
-}
-function deleteGrid(gridCell) {
-gridCell.forEach((item) => {
-item.remove();
-})
-}
-
-
-display: grid;
-grid-template-rows: repeat(${rows}, auto);
-grid-template-columns: repeat(${cols}, auto);
-*/
